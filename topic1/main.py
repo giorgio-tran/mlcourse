@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import seaborn as sns
 
 DATA_URL = "https://raw.githubusercontent.com/Yorko/mlcourse.ai/main/data/"
 
@@ -62,3 +63,59 @@ print(df.groupby(["Churn"])[columns_to_show].describe(percentiles=[]))
 
 # agg, allows you to add functions to specify what exactly you want to see. In this case we want to see the mean, std, min, and max
 print(df.groupby(["Churn"])[columns_to_show].agg([np.mean, np.std, np.min, np.max]))
+
+# Contingency table, comparing two variables
+print(df["International plan"])
+print(pd.crosstab(df["Churn"], df["International plan"]))
+# normalize to see proportions
+print(pd.crosstab(df["Churn"], df["International plan"], normalize=True))
+
+# Pivot table
+# Row, column, then specify statistic to calculate
+print(df.pivot_table(["Total day calls", "Total eve calls", "Total night calls"], ["Area code"], aggfunc="mean"))
+
+# DataFrame transformations
+total_calls = (
+  df["Total day calls"]
+  + df["Total eve calls"]
+  + df["Total night calls"]
+  + df["Total intl calls"]
+)
+# loc specifies which location to insert the new column
+df.insert(loc=len(df.columns), column="Total calls", value=total_calls)
+print(df.head())
+
+df["Total charge"] = (
+    df["Total day charge"]
+    + df["Total eve charge"]
+    + df["Total night charge"]
+    + df["Total intl charge"]
+)
+df.head()
+
+# removing/dropping columns. Need to specify axis=1 to drop columns, otherwise it will drop rows
+print(df.drop(["Total charge", "Total calls"], axis=1, inplace=True))
+df.head()
+
+# predicting telecom churn
+pd.crosstab(df["Churn"], df["International plan"], margins=True)
+
+sns.set_theme()
+# Graphis in retina format
+%config InlineBacked.figure_format = 'retina'
+
+sns.countplot(x="International plan", hue="Churn", data=df)
+
+# check customer service
+pd.crosstab(df["Churn"], df["Customer service calls"], margins=True)
+sns.countplot(x="Customer service calls", hue="Churn", data=df)
+
+# Add many service calls column that looks at data of customer service calls and checks if it is greater than 3
+df["Many_service_calls"] = (df["Customer service calls"] > 3).astype("int")
+pd.crosstab(df["Many_service_calls"], df["Churn"], margins=True)
+sns.countplot(x="Many_service_calls", hue="Churn", data=df)
+
+pd.crosstab(df["Many_service_calls"] & df["International plan"], df["Churn"])
+
+
+
